@@ -42,7 +42,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000","https://cortex-ai-pi.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -217,8 +217,8 @@ def login(
         key="token",
         value=token,
         httponly=True,
-        samesite="lax",
-        secure=False,      # ⚠️ True in production (HTTPS)
+        samesite="none",
+        secure=True,      # ⚠️ True in production (HTTPS)
         max_age=60 * 60 * 24,  # 1 day
     )
 
