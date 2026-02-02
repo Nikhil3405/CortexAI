@@ -219,6 +219,7 @@ def login(
         httponly=True,
         samesite="none",
         secure=True,      # ⚠️ True in production (HTTPS)
+        path="/",
         max_age=60 * 60 * 24,  # 1 day
     )
 
