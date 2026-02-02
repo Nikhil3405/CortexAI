@@ -173,21 +173,26 @@ export default function ChatPage() {
           className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 scroll-smooth"
         >
           {messages.length === 0 && !isUploading && (
-            <div className="h-full flex flex-col items-center justify-center text-center px-4">
-              <div className="w-23 h-23 sm:w-25 sm:h-25 bg-white border-2 border-neutral-200 rounded-full flex items-center justify-center mb-3 sm:mb-4 shadow-sm">
-                
-              <Image 
-                src="/pdf.svg" 
-                alt="pdf" 
-                width={24} 
-                height={24}
-                className="w-12 h-12 sm:w-13 sm:h-13"
-              />
+            <div className="flex mt-44 w-full items-center justify-center overflow-hidden">
+              <div className="flex flex-col items-center justify-center text-center px-4">
+                <div className="w-23 h-23 sm:w-25 sm:h-25 bg-white border-2 border-neutral-200 rounded-full flex items-center justify-center mb-3 sm:mb-4 shadow-sm">
+                  <Image
+                    src="/pdf.svg"
+                    alt="pdf"
+                    width={24}
+                    height={24}
+                    className="w-12 h-12 sm:w-13 sm:h-13"
+                  />
+                </div>
+          
+                <h2 className="font-semibold text-neutral-900 text-base sm:text-lg">
+                  Ready to analyze
+                </h2>
+          
+                <p className="text-neutral-500 text-xs sm:text-sm max-w-xs mt-2">
+                  Upload one or multiple PDFs to begin your intelligent document analysis.
+                </p>
               </div>
-              <h2 className="font-semibold text-neutral-900 text-base sm:text-lg">Ready to analyze</h2>
-              <p className="text-neutral-500 text-xs sm:text-sm max-w-xs mt-2">
-                Upload one or multiple PDFs to begin your intelligent document analysis.
-              </p>
             </div>
           )}
 
