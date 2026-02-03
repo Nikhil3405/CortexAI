@@ -55,9 +55,10 @@ export default function ChatPage() {
       
       // 🔹 ONLY update messages if we actually got new content.
       // This prevents the "vanishing" effect if the DB is temporarily empty.
-      if (history.length > 0) {
+      if (history.length >= messages.length) {
         setMessages(history);
       }
+
 
       const lastMessage = history[history.length - 1];
 
