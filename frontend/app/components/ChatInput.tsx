@@ -40,7 +40,7 @@ export default function ChatInput({
     try {
       for (const file of files) {
         const formData = new FormData();
-        formData.append("file", file); // 🔹 Note: Backend usually expects "file", not "files"
+        formData.append("files", file); // 🔹 Note: Backend usually expects "file", not "files"
 
         if (currentId) {
           formData.append("conversation_id", currentId);
@@ -62,35 +62,30 @@ export default function ChatInput({
     }
   };
 
-  const handleSend = async () => {
-    if (!text.trim() || disabled) return;
+const handleSend = async () => {
+  if (!text.trim() || disabled) return;
 
-    const q = text;
-    setText("");
-    
-    // 1. Optimistically show the user's message
-    onUserMessage({ role: "user", content: q, type: "text" });
-    
-    // 2. 🔹 FIX: Immediately signal that processing has begun 
-    // to prevent the "disappearing" effect while the worker starts
-    onProcessingEnd(); 
+  const q = text;
+  setText("");
 
-    try {
-      const res = await apiRequest("/query-pdf", "POST", {
-        question: q,
-        conversation_id: activeConversationId,
-      });
+  onUserMessage({ role: "user", content: q, type: "text" });
 
-      // If this was a new chat, lock in the conversation ID
-      if (res.conversation_id && !activeConversationId) {
-        onConversationCreated(res.conversation_id);
-      }
-    } catch (err) {
-      console.error("Query failed:", err);
+  // ✅ correct semantic signal
+  onUploadStart();
+
+  try {
+    const res = await apiRequest("/query-pdf", "POST", {
+      question: q,
+      conversation_id: activeConversationId,
+    });
+
+    if (res.conversation_id && !activeConversationId) {
+      onConversationCreated(res.conversation_id);
     }
-    // 🔹 Removed redundant onProcessingEnd from finally 
-    // because we triggered it early to show the "Thinking" state.
-  };
+  } catch (err) {
+    console.error("Query failed:", err);
+  }
+};
 
   return (
     <div className="w-full mx-auto flex items-end gap-1.5 sm:gap-2 bg-white border-2 border-neutral-200 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 focus-within:border-neutral-400 focus-within:shadow-lg transition-all shadow-md hover:shadow-lg max-w-4xl">
