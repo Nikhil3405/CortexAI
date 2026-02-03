@@ -157,7 +157,15 @@ return (
 
             {isThinking && (
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-black flex items-center justify-center text-[9px] sm:text-[10px] text-white font-bold">AI</div>
+                <div className="mr-2 sm:mr-3 flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-neutral-800 to-neutral-900 shadow-md border border-neutral-700 overflow-hidden group-hover:scale-110 transition-transform">
+                          <Image
+                            src="/favicon.ico"
+                            alt="AI"
+                            width={20}
+                            height={20}
+                            className="w-4 h-4 sm:w-5 sm:h-5 invert"
+                          />
+                </div>
                 <div className="bg-white border border-neutral-200 p-3 sm:p-4 rounded-2xl rounded-tl-none shadow-sm flex gap-1">
                   <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-neutral-300 rounded-full animate-bounce"></span>
                   <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-neutral-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
