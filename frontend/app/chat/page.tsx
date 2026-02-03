@@ -143,7 +143,7 @@ export default function ChatPage() {
             </button>
 
             {/* Logo and Title */}
-            <div className="flex items-center gap-2">
+            <div className="sticky top-0 flex items-center gap-2">
               <h1 className="font-semibold tracking-tight text-neutral-900 text-sm sm:text-base truncate max-w-37.5 sm:max-w-none">
                  CortexAI
               </h1>
@@ -229,7 +229,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input area */}
-        <div className="p-3 sm:p-6 bg-white border-t border-neutral-200">
+        <div className="sticky bottom-0 p-3 sm:p-6 bg-white border-t border-neutral-200">
           <ChatInput
             activeConversationId={activeConversationId}
             disabled={isUploading || isThinking}
