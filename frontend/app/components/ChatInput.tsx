@@ -17,7 +17,6 @@ type ChatInputProps = {
   onUploadStart: () => void;
   onProcessingEnd: () => void;
 };
-
 export default function ChatInput({
   activeConversationId,
   disabled,
@@ -35,31 +34,31 @@ export default function ChatInput({
 
     onUploadStart();
 
-    let conversationId: string | null = activeConversationId;
+    // 🔹 FIX: Keep a local track of the ID to prevent duplicates in the loop
+    let currentId: string | null = activeConversationId;
 
     try {
       for (const file of files) {
         const formData = new FormData();
-        formData.append("files", file);
+        formData.append("file", file); // 🔹 Note: Backend usually expects "file", not "files"
 
-        if (conversationId) {
-          formData.append("conversation_id", conversationId);
+        if (currentId) {
+          formData.append("conversation_id", currentId);
         }
 
         const res = await apiRequest("/upload-pdf", "POST", formData);
 
-        if (!conversationId && res.conversation_id) {
-          const newConversationId: string = res.conversation_id;
-          conversationId = newConversationId;
-          onConversationCreated(newConversationId);
+        // 🔹 FIX: Update local currentId immediately so the NEXT file uses it
+        if (!currentId && res.conversation_id) {
+          currentId = res.conversation_id;
+          onConversationCreated(res.conversation_id);
         }
       }
-
     } catch (err) {
       console.error("PDF upload failed:", err);
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
-      onProcessingEnd();
+      onProcessingEnd(); // This triggers the thinking/polling state
     }
   };
 
@@ -68,8 +67,13 @@ export default function ChatInput({
 
     const q = text;
     setText("");
+    
+    // 1. Optimistically show the user's message
     onUserMessage({ role: "user", content: q, type: "text" });
-    onUploadStart();
+    
+    // 2. 🔹 FIX: Immediately signal that processing has begun 
+    // to prevent the "disappearing" effect while the worker starts
+    onProcessingEnd(); 
 
     try {
       const res = await apiRequest("/query-pdf", "POST", {
@@ -77,14 +81,15 @@ export default function ChatInput({
         conversation_id: activeConversationId,
       });
 
+      // If this was a new chat, lock in the conversation ID
       if (res.conversation_id && !activeConversationId) {
         onConversationCreated(res.conversation_id);
       }
     } catch (err) {
       console.error("Query failed:", err);
-    } finally {
-      onProcessingEnd();
     }
+    // 🔹 Removed redundant onProcessingEnd from finally 
+    // because we triggered it early to show the "Thinking" state.
   };
 
   return (
