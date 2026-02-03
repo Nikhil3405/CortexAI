@@ -402,31 +402,21 @@ async def rag_ingest_pdf(ctx: inngest.Context):
 # --------------------------------------------------
 # Query PDF Function + 💾 STORAGE (UPDATED)
 # --------------------------------------------------
-
 @inngest_client.create_function(
     fn_id="RAG: Query PDF",
     trigger=inngest.TriggerEvent(event="rag/query_pdf_ai"),
 )
 async def rag_query_pdf_ai(ctx: inngest.Context):
-    # Inside rag_query_pdf_ai in main.py
     def _search() -> RAGSearchResult:
         question = ctx.event.data["question"]
         allowed_pdf_ids = ctx.event.data.get("allowed_pdf_ids", [])
         
-        # 1. Safely get the embedding
         vectors = embed_text([question])
-        
-        # 🚨 Safety Check: If embedding fails, return empty context
-        # This allows the LLM to fall back to general knowledge instead of crashing the worker
         if not vectors:
-            print("⚠️ Embedding failed for question. Falling back to general knowledge.")
             return RAGSearchResult(contexts=[], sources=[])
         
         query_vec = vectors[0]
         store = QdrantStorage()
-        
-        # 2. Perform filtered search
-        # We use .get() to avoid KeyErrors if the store returns an unexpected format
         found = store.search(query_vec, top_k=5, allowed_pdf_ids=allowed_pdf_ids)
         
         return RAGSearchResult(
@@ -434,43 +424,52 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
             sources=found.get("sources", []),
         )
 
+    # 1. Search Vector DB
     found = await ctx.step.run(
         "embed-and-search",
         _search,
         output_type=RAGSearchResult,
     )
 
+    # 2. Generate Hybrid Answer
     question = ctx.event.data["question"]
     answer = await ctx.step.run(
         "generate-answer",
         lambda: generate_answer(found.contexts, question),
     )
 
-    # ✅ USE conversation_id PROVIDED BY API
+    # 3. Atomic Database Commit
     conversation_id = ctx.event.data["conversation_id"]
 
-    db = next(get_db())
+    def _save_to_db():
+        db = next(get_db())
+        try:
+            # 🔹 We save BOTH here so the frontend polling 
+            # sees the complete state in one go.
+            db.add_all([
+                Message(
+                    conversation_id=conversation_id,
+                    role="user",
+                    content=question,
+                ),
+                Message(
+                    conversation_id=conversation_id,
+                    role="assistant",
+                    content=answer,
+                ),
+            ])
+            db.commit()
+            return True
+        except Exception as e:
+            db.rollback()
+            raise e
 
-    db.add_all([
-        Message(
-            conversation_id=conversation_id,
-            role="user",
-            content=question,
-        ),
-        Message(
-            conversation_id=conversation_id,
-            role="assistant",
-            content=answer,
-        ),
-    ])
-    db.commit()
+    await ctx.step.run("save-to-db", _save_to_db)
 
     return {
         "status": "stored",
         "num_contexts": len(found.contexts),
     }
-
-
 
 @app.post("/query-pdf")
 async def query_pdf(
