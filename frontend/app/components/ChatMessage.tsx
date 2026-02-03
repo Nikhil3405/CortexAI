@@ -12,36 +12,61 @@ type Props = {
  * 🔹 Formats Bold (**text**) and Inline Code (`code`)
  */
 function formatInlineStyles(text: string) {
-  // Split by bold (**), keeping the delimiter to identify bold text
-  const boldParts = text.split(/(\*\*(?:.*?)\*\*)/g);
+  const regex = /(\*\*([^*]+)\*\*|`([^`]+)`)/g;
+  const elements: React.ReactNode[] = [];
 
-  return boldParts.map((part, i) => {
-    // Check if this part is wrapped in **
-    if (part.startsWith("**") && part.endsWith("**")) {
-      const boldText = part.slice(2, -2); // Remove the asterisks
-      return (
-        <strong key={`bold-${i}`} className="font-bold text-neutral-900 dark:text-white inline">
-          {boldText}
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Normal text before match
+    if (match.index > lastIndex) {
+      elements.push(
+        <span key={`text-${lastIndex}`}>
+          {text.slice(lastIndex, match.index)}
+        </span>
+      );
+    }
+
+    // Bold
+    if (match[2]) {
+      elements.push(
+        <strong
+          key={`bold-${match.index}`}
+          className="font-bold text-inherit"
+        >
+          {match[2]}
         </strong>
       );
     }
 
-    // Handle inline code within the non-bold segments
-    const codeParts = part.split(/`(.*?)`/g);
-    return codeParts.map((subPart, j) =>
-      j % 2 === 1 ? (
+    // Inline code
+    if (match[3]) {
+      elements.push(
         <code
-          key={`code-${j}`}
-          className="bg-neutral-200/50 px-1 rounded font-mono text-[0.9em] font-medium"
+          key={`code-${match.index}`}
+          className="bg-neutral-200/50 px-1 rounded font-mono text-[0.9em]"
         >
-          {subPart}
+          {match[3]}
         </code>
-      ) : (
-        <span key={`text-${j}`}>{subPart}</span>
-      )
+      );
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  // Remaining text
+  if (lastIndex < text.length) {
+    elements.push(
+      <span key={`text-end-${lastIndex}`}>
+        {text.slice(lastIndex)}
+      </span>
     );
-  });
+  }
+
+  return elements;
 }
+
 
 function renderFormattedText(text: string, isUser: boolean) {
   const lines = text.split("\n");
