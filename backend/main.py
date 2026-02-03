@@ -446,18 +446,13 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
         try:
             # 🔹 We save BOTH here so the frontend polling 
             # sees the complete state in one go.
-            db.add_all([
-                Message(
-                    conversation_id=conversation_id,
-                    role="user",
-                    content=question,
-                ),
+            db.add_all(
                 Message(
                     conversation_id=conversation_id,
                     role="assistant",
                     content=answer,
-                ),
-            ])
+                )
+            )
             db.commit()
             return True
         except Exception as e:
@@ -473,46 +468,50 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
 
 @app.post("/query-pdf")
 async def query_pdf(
-    data: QueryPdfSchema, 
-    user=Depends(get_current_user), 
+    data: QueryPdfSchema,
+    user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # 1. Check if we have an ID. If not, create a new conversation record.
     if not data.conversation_id:
         conv = Conversation(id=str(uuid.uuid4()), user_id=user.id)
         db.add(conv)
         db.commit()
         db.refresh(conv)
         active_id = conv.id
-        allowed_pdf_ids = [] # No PDFs yet
+        allowed_pdf_ids = []
     else:
-        # 2. Existing conversation check
         conv = db.query(Conversation).filter(
             Conversation.id == data.conversation_id,
             Conversation.user_id == user.id
         ).first()
-        
         if not conv:
-            # If the ID was provided but not found in DB
-            raise HTTPException(status_code=404, detail="Conversation session expired or not found")
-        
+            raise HTTPException(status_code=404)
         active_id = conv.id
         allowed_pdf_ids = [p.id for p in conv.pdfs]
 
-    # 3. Trigger Inngest
+    # ✅ SAVE USER MESSAGE IMMEDIATELY
+    db.add(
+        Message(
+            conversation_id=active_id,
+            role="user",
+            content=data.question,
+        )
+    )
+    db.commit()
+
+    # 🔹 Trigger AI processing
     await inngest_client.send(
         inngest.Event(
             name="rag/query_pdf_ai",
             data={
                 "question": data.question,
                 "conversation_id": active_id,
-                "allowed_pdf_ids": allowed_pdf_ids 
+                "allowed_pdf_ids": allowed_pdf_ids,
             }
         )
     )
-    
-    return {"status": "processing", "conversation_id": active_id}
 
+    return {"status": "processing", "conversation_id": active_id}
 
 
 @app.get("/pdfs")
