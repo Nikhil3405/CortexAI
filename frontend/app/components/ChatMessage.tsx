@@ -12,23 +12,27 @@ type Props = {
  * 🔹 Formats Bold (**text**) and Inline Code (`code`)
  */
 function formatInlineStyles(text: string) {
-  const boldParts = text.split(/\*\*(.*?)\*\*/g);
+  // Split by bold (**), keeping the delimiter to identify bold text
+  const boldParts = text.split(/(\*\*(?:.*?)\*\*)/g);
 
   return boldParts.map((part, i) => {
-    if (i % 2 === 1) {
+    // Check if this part is wrapped in **
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const boldText = part.slice(2, -2); // Remove the asterisks
       return (
-        <strong key={`bold-${i}`} className="font-bold text-inherit">
-          {part}
+        <strong key={`bold-${i}`} className="font-bold text-neutral-900 dark:text-white inline">
+          {boldText}
         </strong>
       );
     }
 
+    // Handle inline code within the non-bold segments
     const codeParts = part.split(/`(.*?)`/g);
     return codeParts.map((subPart, j) =>
       j % 2 === 1 ? (
         <code
           key={`code-${j}`}
-          className="bg-neutral-200/50 px-1 rounded font-mono text-[0.9em]"
+          className="bg-neutral-200/50 px-1 rounded font-mono text-[0.9em] font-medium"
         >
           {subPart}
         </code>
