@@ -446,30 +446,35 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
         lambda: generate_answer(found.contexts, question),
     )
 
-    # ✅ USE conversation_id PROVIDED BY API
     conversation_id = ctx.event.data["conversation_id"]
 
-    db = next(get_db())
+    def _save_to_db():
+        db = next(get_db())
+        try:
+            db.add_all([
+                Message(
+                    conversation_id=conversation_id,
+                    role="user",
+                    content=question,
+                ),
+                Message(
+                    conversation_id=conversation_id,
+                    role="assistant",
+                    content=answer,
+                ),
+            ])
+            db.commit()
+            return True
+        except Exception as e:
+            db.rollback()
+            raise e
 
-    db.add_all([
-        Message(
-            conversation_id=conversation_id,
-            role="user",
-            content=question,
-        ),
-        Message(
-            conversation_id=conversation_id,
-            role="assistant",
-            content=answer,
-        ),
-    ])
-    db.commit()
+    await ctx.step.run("save-to-db", _save_to_db)
 
     return {
         "status": "stored",
         "num_contexts": len(found.contexts),
     }
-
 
 
 @app.post("/query-pdf")
