@@ -63,7 +63,11 @@ export default function ChatPage() {
       const lastMessage = history[history.length - 1];
 
       // STOP CONDITION
-      if (lastMessage?.role === "assistant") {
+      if (
+        lastMessage?.role === "assistant" &&
+        lastMessage.content &&
+        lastMessage.content.length > 0
+      ) {
         setIsThinking(false);
         setIsUploading(false);
 
