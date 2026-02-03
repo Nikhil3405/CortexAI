@@ -446,7 +446,7 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
         try:
             # 🔹 We save BOTH here so the frontend polling 
             # sees the complete state in one go.
-            db.add_all(
+            db.add(
                 Message(
                     conversation_id=conversation_id,
                     role="assistant",
