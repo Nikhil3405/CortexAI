@@ -71,7 +71,9 @@ const handleSend = async () => {
   onUserMessage({ role: "user", content: q, type: "text" });
 
   // ✅ correct semantic signal
-  onUploadStart();
+  onUploadStart();      // uploading/processing begins
+  onProcessingEnd();   // explicitly tells ChatPage to start thinking
+
 
   try {
     const res = await apiRequest("/query-pdf", "POST", {

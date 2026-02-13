@@ -39,7 +39,6 @@ key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") # Use Service Role for backend
 supabase: Client = create_client(url, key)
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000","https://cortex-ai-pi.vercel.app"],
@@ -281,8 +280,16 @@ INSTRUCTIONS:
 2. Combine the information from the documents with your own extensive knowledge to provide a comprehensive and insightful answer.
 3. If the "Document Context" is missing, irrelevant, or insufficient, use your general knowledge to help the user. 
 4. If you are relying ONLY on general knowledge because the documents are silent on the topic, start your response with: "I couldn't find specific details in your documents, but based on general knowledge..."
-5. Be concise, professional, and avoid unnecessary jargon.
+5. Be concise and give short answers with proper explanations.
 6. If you truly do not know the answer even with your general knowledge, say: "I'm sorry, I don't have the answer to that question."
+
+FORMAT RULES (VERY IMPORTANT):
+- Always return valid Markdown.
+- Use "-" for bullet points (NOT •).
+- Use **bold** with exactly two asterisks.
+- Never mix * and ** incorrectly.
+- Do NOT output broken markdown.
+
 
 Context:
 {context_block}
