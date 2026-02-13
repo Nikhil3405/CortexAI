@@ -116,3 +116,4 @@ export default function ChatMessage({ role, content, type }: Props) {
     </div>
   );
 }
+
